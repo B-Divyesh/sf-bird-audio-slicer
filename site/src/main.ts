@@ -32,6 +32,16 @@ function formatBytes(bytes: number) {
   return `${value.toFixed(unit > 1 ? 2 : 0)} ${units[unit]}`;
 }
 
+function fact(term: string, description: string) {
+  const group = document.createElement('div');
+  const dt = document.createElement('dt');
+  const dd = document.createElement('dd');
+  dt.textContent = term;
+  dd.textContent = description;
+  group.append(dt, dd);
+  return group;
+}
+
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   errorText.textContent = '';
@@ -60,7 +70,12 @@ form.addEventListener('submit', async (event) => {
       return row;
     }));
     resultTitle.textContent = `${ranges.length.toLocaleString()} clips from ${clock(audio.duration)}`;
-    facts.innerHTML = `<div><dt>Recording</dt><dd>${file.name}</dd></div><div><dt>Format</dt><dd>${audio.container} · ${audio.bitsPerSample}-bit</dd></div><div><dt>Audio</dt><dd>${audio.sampleRate.toLocaleString()} Hz · ${audio.channels} ch</dd></div><div><dt>Size</dt><dd>${formatBytes(file.size)}</dd></div>`;
+    facts.replaceChildren(
+      fact('Recording', file.name),
+      fact('Format', `${audio.container} · ${audio.bitsPerSample}-bit`),
+      fact('Audio', `${audio.sampleRate.toLocaleString()} Hz · ${audio.channels} ch`),
+      fact('Size', formatBytes(file.size))
+    );
     remaining.textContent = ranges.length > 8 ? `Showing 8 of ${ranges.length.toLocaleString()} planned clips.` : `Showing all ${ranges.length.toLocaleString()} planned clips.`;
     currentManifest = {
       schema: 'nightjar-manifest/v1-preview',

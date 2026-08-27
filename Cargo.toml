@@ -10,6 +10,7 @@ readme = "README.md"
 keywords = ["audio", "birding", "wav", "flac", "cli"]
 categories = ["command-line-utilities", "multimedia::audio"]
 exclude = ["dist", "graphify-out", ".factory"]
+include = ["src/**", "tests/**", "Cargo.toml", "Cargo.lock", "README.md", "LICENSE", "CHANGELOG.md"]
 
 [[bin]]
 name = "nightjar"

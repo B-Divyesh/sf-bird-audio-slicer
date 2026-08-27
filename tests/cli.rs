@@ -87,6 +87,25 @@ fn slice_writes_private_manifest_and_resumes() {
     assert!(second.status.success());
     let result: serde_json::Value = serde_json::from_slice(&second.stdout).unwrap();
     assert_eq!(result["chunks_reused"], 3);
+
+    let damaged = output.join("clip_0002_00-00-10.wav");
+    fs::write(&damaged, b"incomplete").unwrap();
+    let repaired = Command::new(env!("CARGO_BIN_EXE_nightjar"))
+        .args([
+            "--json",
+            "slice",
+            input.to_str().unwrap(),
+            "--output",
+            output.to_str().unwrap(),
+            "--chunk-seconds",
+            "10",
+        ])
+        .output()
+        .unwrap();
+    assert!(repaired.status.success());
+    let result: serde_json::Value = serde_json::from_slice(&repaired.stdout).unwrap();
+    assert_eq!(result["chunks_reused"], 2);
+    assert!(damaged.metadata().unwrap().len() > 44);
 }
 
 #[test]
@@ -115,6 +134,20 @@ fn silence_mode_finishes_and_redacts_paths() {
         "{}",
         String::from_utf8_lossy(&result.stderr)
     );
-    let manifest = fs::read_to_string(output.join("manifest.json")).unwrap();
-    assert!(!manifest.contains(temp.path().to_str().unwrap()));
+    let manifest_text = fs::read_to_string(output.join("manifest.json")).unwrap();
+    assert!(!manifest_text.contains(temp.path().to_str().unwrap()));
+    let manifest: serde_json::Value = serde_json::from_str(&manifest_text).unwrap();
+    assert_ne!(manifest["chunks"][1]["start_seconds"], 10.0);
+}
+
+#[test]
+fn missing_input_has_documented_machine_readable_exit() {
+    let result = Command::new(env!("CARGO_BIN_EXE_nightjar"))
+        .args(["--json", "inspect", "/definitely/missing/night.wav"])
+        .output()
+        .unwrap();
+    assert_eq!(result.status.code(), Some(3));
+    let error: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(error["status"], "error");
+    assert_eq!(error["exit_code"], 3);
 }
