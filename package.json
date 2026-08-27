@@ -1,0 +1,17 @@
+{
+  "name": "nightjar-slicer-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config site/vite.config.mjs",
+    "test": "cargo test && node --test site/tests/*.test.mjs && npm run build:site",
+    "build": "npm run build:site && npm run build:cli",
+    "build:site": "vite build --config site/vite.config.mjs",
+    "build:cli": "cargo build --release && node scripts/stage-cli.mjs",
+    "preview": "vite preview --config site/vite.config.mjs"
+  },
+  "devDependencies": {
+    "vite": "^7.1.3"
+  }
+}
