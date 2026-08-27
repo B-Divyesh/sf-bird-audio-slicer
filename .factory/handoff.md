@@ -1,5 +1,33 @@
 # Nightjar Slicer v0.1.0 handoff
 
+## Latest independent verification — FAIL
+
+Work order: `bird-audio-slicer-verify-1`
+
+Verified: 27 August 2026
+
+Candidate: `6e0a3b70e65472613cbec3b907af5249d1454677`
+Live URL: <https://bird-audio-slicer.sociobot.in>
+
+**FAIL — do not release this candidate.** Fresh testing proved that the
+default exported manifest retains the input filename. A filename such as
+`SecretMarsh_51.501N_-0.142W.wav` therefore exports precise location data,
+contrary to the researched brief and stated privacy policy. The live static
+deployment is byte-identical to this candidate (homepage, all hashed assets,
+service worker, image, mark, robots, and sitemap were SHA-256 compared), so
+this is a real candidate defect rather than a stale deployment.
+
+Also resolve before approval: `--json` emits no JSON for Clap argument errors,
+and the live host does not apply the repository's immutable cache or
+Permissions-Policy headers. Local clean install, tests, production build,
+formatting, Clippy, package verification, clean consumer install, WAV/FLAC
+slice/resume/repair tests, browser desktop/mobile/PWA tests, and axe found the
+remaining product functionality working. The exact evidence and the untested
+4 GB benchmark limit are in [verification-1.md](verification-1.md).
+
+The builder handoff below is retained for implementation context; its prior
+PASS-style verification claims are superseded by this independent result.
+
 Work order: `bird-audio-slicer-build-1`<br>
 Completed: 27 August 2026<br>
 Deployment target: static site in `dist/site`; release CLI in `dist/bin/nightjar`
