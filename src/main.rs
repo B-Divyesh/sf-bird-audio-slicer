@@ -147,7 +147,9 @@ struct Privacy {
 
 #[derive(Debug, Serialize)]
 struct ManifestSource {
-    name: String,
+    /// The input filename can encode a sensitive recording location, so it is
+    /// exported only alongside an explicitly requested source path.
+    name: Option<String>,
     path: Option<String>,
     file_bytes: u64,
     sample_rate_hz: u32,
@@ -208,7 +210,10 @@ struct OpenAudio {
 }
 
 fn main() -> ExitCode {
-    let cli = Cli::parse();
+    let cli = match Cli::try_parse() {
+        Ok(cli) => cli,
+        Err(error) => return render_cli_error(error),
+    };
     match run(&cli) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
@@ -221,6 +226,26 @@ fn main() -> ExitCode {
             ExitCode::from(error.code)
         }
     }
+}
+
+/// Clap normally prints argument errors before application code runs. Keep the
+/// `--json` promise intact by rendering those errors through the same stdout
+/// channel as runtime failures.
+fn render_cli_error(error: clap::Error) -> ExitCode {
+    let json_requested = std::env::args_os().any(|argument| argument == "--json");
+    let exit_code = error.exit_code();
+    if json_requested && exit_code != 0 {
+        let value = serde_json::json!({
+            "status": "error",
+            "error": "invalid_arguments",
+            "message": error.to_string().trim(),
+            "exit_code": exit_code,
+        });
+        println!("{}", serde_json::to_string(&value).unwrap_or_default());
+    } else {
+        let _ = error.print();
+    }
+    ExitCode::from(exit_code.clamp(0, u8::MAX as i32) as u8)
 }
 
 fn run(cli: &Cli) -> Result<(), AppError> {
@@ -874,7 +899,7 @@ fn write_exports(args: &SliceArgs, info: &AudioInfo, state: &ResumeState) -> Res
             note: "Location-bearing source metadata is omitted unless explicitly requested.",
         },
         source: ManifestSource {
-            name: info.name.clone(),
+            name: args.include_source_path.then(|| info.name.clone()),
             path: absolute_path,
             file_bytes: info.file_bytes,
             sample_rate_hz: info.sample_rate_hz,

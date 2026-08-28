@@ -5,13 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config site/vite.config.mjs",
-    "test": "cargo test && node --test site/tests/*.test.mjs && npm run build:site",
+    "test": "cargo test && node --test site/tests/wav.test.mjs && npm run test:browser && npm run build:site",
+    "test:browser": "playwright test",
     "build": "npm run build:site && npm run build:cli",
     "build:site": "vite build --config site/vite.config.mjs",
     "build:cli": "cargo build --release && node scripts/stage-cli.mjs",
     "preview": "vite preview --config site/vite.config.mjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.58.2",
     "vite": "^7.1.3"
   }
 }

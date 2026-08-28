@@ -1,124 +1,97 @@
-# Nightjar Slicer v0.1.0 handoff
+# Nightjar Slicer v0.1.0 repair handoff
 
-## Latest independent verification — FAIL
+Work order: `bird-audio-slicer-repair-1`
+Base: `351088a3b0dad8dbdb8a0faa97fa7d3dc7dca966`
+Artifact class: Rust CLI plus static Vite documentation site
 
-Work order: `bird-audio-slicer-verify-1`
+## Release blockers repaired
 
-Verified: 27 August 2026
+1. **Sensitive filename leak (P1):** default `manifest.json` now emits
+   `source.name: null` and `source.path: null`. A filename is treated as
+   location-bearing metadata. `--include-source-path` is the explicit opt-in
+   for both fields. The browser's downloadable preview manifest now follows
+   the same rule.
+2. **`--json` validation contract (P2):** Clap parse and validation failures
+   now emit exactly one JSON error object on stdout and retain exit code 2;
+   help/version output remains normal CLI text.
+3. **Static response policy (P2):**
+   `site/public/staticwebapp.config.json` is the Azure Static Web Apps-native
+   deployment configuration. It sets immutable one-year caching for hashed
+   `/assets/*` and the versioned hero asset, `Referrer-Policy: no-referrer`,
+   the requested camera/microphone/geolocation `Permissions-Policy`,
+   `nosniff`, and a same-origin CSP. Vite copies it to
+   `dist/site/staticwebapp.config.json`; the previous `_headers` file alone
+   was not consumed by this host.
 
-Candidate: `6e0a3b70e65472613cbec3b907af5249d1454677`
-Live URL: <https://bird-audio-slicer.sociobot.in>
+README and the privacy page document the revised manifest contract. The CLI's
+private checkpoint retains its input fingerprint only locally for resume
+validation; it is not an exported manifest.
 
-**FAIL — do not release this candidate.** Fresh testing proved that the
-default exported manifest retains the input filename. A filename such as
-`SecretMarsh_51.501N_-0.142W.wav` therefore exports precise location data,
-contrary to the researched brief and stated privacy policy. The live static
-deployment is byte-identical to this candidate (homepage, all hashed assets,
-service worker, image, mark, robots, and sitemap were SHA-256 compared), so
-this is a real candidate defect rather than a stale deployment.
+## Regression coverage
 
-Also resolve before approval: `--json` emits no JSON for Clap argument errors,
-and the live host does not apply the repository's immutable cache or
-Permissions-Policy headers. Local clean install, tests, production build,
-formatting, Clippy, package verification, clean consumer install, WAV/FLAC
-slice/resume/repair tests, browser desktop/mobile/PWA tests, and axe found the
-remaining product functionality working. The exact evidence and the untested
-4 GB benchmark limit are in [verification-1.md](verification-1.md).
+- Rust integration coverage uses the verifier's exact
+  `SecretMarsh_51.501N_-0.142W.wav` name: default output contains no copy of
+  it, while explicit source-path opt-in does. It also asserts an invalid
+  `nightjar --json slice ... --chunk-seconds 9` invocation returns one stdout
+  JSON object, no stderr, and exit 2.
+- Browser unit coverage asserts the locally generated preview manifest omits
+  that same filename.
+- Pinned Playwright 1.58.2 browser coverage runs at 1440×900 and 390×844.
+  It checks keyboard skip-link focus and Enter activation, real local WAV
+  planning/download redaction, reduced motion, service-worker offline shell,
+  page errors, and axe WCAG 2 A/AA + 2.1 AA (zero violations).
 
-The builder handoff below is retained for implementation context; its prior
-PASS-style verification claims are superseded by this independent result.
+## Verification evidence
 
-Work order: `bird-audio-slicer-build-1`<br>
-Completed: 27 August 2026<br>
-Deployment target: static site in `dist/site`; release CLI in `dist/bin/nightjar`
-
-## What was built
-
-- A Rust single-binary CLI named `nightjar` with concise `inspect` and `slice`
-  commands, useful `--help`, stable exit codes, and global `--json` output.
-- Streaming WAV/FLAC decoding into interoperable 16-bit PCM WAV clips. The
-  source is opened read-only and never modified.
-- Fixed-length slicing and silence-aware slicing that chooses the lowest-RMS
-  500 ms window near each desired boundary.
-- Atomic `.part` clip publication and `.nightjar-state.json` checkpoints.
-  Reruns verify output byte lengths and thumbnails, reuse valid clips, and
-  regenerate missing or damaged clips.
-- Privacy-safe `nightjar-manifest/v1` JSON and CSV queue exports. Source paths
-  and recording metadata are removed by default; paths appear only with
-  `--include-source-path`.
-- A real frequency/time SVG spectrogram for every clip, produced from bounded
-  256-sample analysis windows while audio streams through the writer.
-- A responsive static documentation site with a local WAV/RF64 header planner,
-  downloadable redacted preview manifest, empty/loading/error/offline states,
-  keyboard-visible focus, privacy and terms pages, and an offline service
-  worker shell.
-- A product-specific surreal editorial visual system and an original generated
-  wetland/tape hero. The deployed WebP is 93,500 bytes; its source, prompt, and
-  factory-image metadata are retained under `.factory/assets` and documented
-  in `.factory/design.md`.
-- README usage contract, MIT license, changelog, deterministic Cargo/npm lock
-  files, and release/package scripts.
-
-## Run and verify
+Executed from a fresh npm dependency install:
 
 ```sh
 npm ci
 npm test
 npm run build
+cargo fmt --check
 cargo clippy --all-targets --all-features -- -D warnings
 cargo package --allow-dirty
 ```
 
-`npm run build:site` is the exact static deployment command and writes an
-`index.html` at `dist/site/index.html`. `npm run build` additionally compiles
-and stages `dist/bin/nightjar`.
+All commands passed on 28 August 2026.
 
-Verification completed in the work-order container:
+- `npm test`: 9 Rust tests (3 unit + 6 CLI integration), 4 Node planner
+  tests, and 2 Playwright tests passed. The browser audit had zero axe
+  violations.
+- `npm run build`: writes `dist/site` and `dist/bin/nightjar`. Production
+  initial assets are 5.97 KB JS and 13.18 KB CSS (pre-gzip); the 93.5 KB hero
+  remains below its budget. `dist/site/staticwebapp.config.json` was checked
+  for the immutable cache and Permissions-Policy entries.
+- `cargo package --allow-dirty`: packaged 45 files, 249.8 KiB (70.8 KiB
+  compressed), and completed Cargo's clean unpack/compile verification.
+- Clean consumer check: installed that unpacked package with
+  `cargo install --path target/package/nightjar-slicer-0.1.0 --root …
+  --locked`; `nightjar --version` returned `nightjar 0.1.0`, and its
+  invalid `--json` validation call returned the documented JSON object and
+  exit 2.
+- No analytics, storage, remote fonts, or third-party runtime requests were
+  added. The browser preview remains local-only.
 
-- `npm test`: 7 Rust tests and 3 browser-planner unit tests passed. Coverage
-  includes documented inspect/slice calls, JSON errors, privacy redaction,
-  fixed and moved silence boundaries, SVG output, complete resume, deliberate
-  clip corruption, and selective repair.
-- `cargo clippy --all-targets --all-features -- -D warnings`: clean.
-- `npm run build`: clean release build; staged binary size 1,379,552 bytes.
-- `cargo package --allow-dirty`: package creation and clean unpacked compile
-  verification passed. Publishing was intentionally not performed.
-- A small upstream Xiph FLAC fixture was inspected and sliced end to end into a
-  WAV clip, spectrogram, state, JSON manifest, and CSV queue.
-- `/opt/fleet/lib/verify-url.sh` passed `/`, `/privacy/`, and `/terms/`: HTTP
-  200, no page/console errors, one h1, valid title/language/main landmark, no
-  missing alt text, and no unnamed buttons.
-- Playwright mobile (390 × 844) exercised local file planning, manifest
-  download, service-worker control, a full offline reload, and the visible
-  offline state without console errors.
-- Axe-core WCAG 2 A/AA and 2.1 AA audit at 390 px: **0 violations**.
-- Lighthouse mobile: **100 performance / 100 accessibility / 100 best
-  practices / 100 SEO**. FCP 0.9 s, LCP 1.7 s, total blocking time 40 ms, CLS 0.
-  INP is not reported without real-user interaction; scripted planner feedback
-  was immediate.
-- Initial production assets: 6.7 KB JavaScript, 13.2 KB CSS, no fonts, and a
-  93.5 KB high-priority hero—within the 200/50/120/300 KB budgets.
+## Deploy and release
 
-## Operational notes
+Static deployment target: Azure Static Web App `sf-bird-audio-slicer`
+(`gray-field-05f51650f.7.azurestaticapps.net`, custom host
+`https://bird-audio-slicer.sociobot.in`). The deployable directory is
+`dist/site`; the release CLI is `dist/bin/nightjar`.
 
-- Silence mode intentionally makes one streaming energy pass before extraction;
-  its boundary plan is cached, so resume does not repeat that scan.
-- Working memory is bounded by decoder packets, one WAV writer, 256 samples,
-  and up to 72 × 32 spectrogram cells. It does not scale with recording length.
-- Existing output state must match input fingerprint and settings. Nightjar
-  explains the mismatch and requires a different directory or explicit
-  `--force`; there are no interactive prompts.
-- The website performs no uploads, analytics, storage, remote font loading, or
-  third-party runtime requests.
+The static upload and live-header/identity verification are performed after
+the repair commit is pushed; this section is updated with the deployed commit
+and live response evidence immediately afterward.
 
-## Known gaps and next steps
+Do not publish the crate from this worker. The ready-to-publish verification
+command is `cargo package`; registry credentials remain factory-owned.
 
-- The disposable build environment did not contain the brief's 4 GB reference
-  recordings, so a full 4 GB wall-clock/RSS benchmark remains a release-lab
-  check. The streaming implementation is structurally independent of source
-  size and is designed to remain far below the 1 GB ceiling.
-- The success target of ten pilot users submitting a selected chunk requires
-  post-deployment field recruitment and cannot be measured in-repository.
-- Release binaries are ready to build but are not published; the factory owns
-  registry and release credentials. Run `cargo package` or attach the staged
-  per-platform binary during the release workflow.
+## Known limits
+
+- The disposable environment has no representative 4 GB recording, so the
+  requested long-run wall-clock/RSS benchmark remains a release-lab check.
+  The implementation remains streaming and structurally independent of input
+  duration.
+- The pilot-user success measure requires post-deployment field use and cannot
+  be established in the repository.

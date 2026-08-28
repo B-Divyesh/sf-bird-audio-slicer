@@ -16,7 +16,7 @@
       <p class="lede">Nightjar Slicer is designed for private, local use. This policy covers the CLI and this documentation site.</p>
       <h2>The CLI</h2>
       <p>The CLI makes no network requests and includes no telemetry. It reads the recording you name and writes only to the output directory you choose. Source recordings are never modified.</p>
-      <p>Exported manifests omit the original source path and embedded recording metadata by default. If you pass <code>--include-source-path</code>, that local path is included because you explicitly requested it.</p>
+      <p>Exported manifests omit the original source filename, source path, and embedded recording metadata by default. A filename can reveal a sensitive recording location. If you pass <code>--include-source-path</code>, that local path and filename are included because you explicitly requested them.</p>
       <h2>The browser planner</h2>
       <p>The demo reads a small WAV header slice in your browser. It does not upload audio, retain the file, use cookies, or place data in local storage. A downloaded sample manifest is created on your device.</p>
       <h2>The hosted site</h2>

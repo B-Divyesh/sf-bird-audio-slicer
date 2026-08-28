@@ -7,8 +7,8 @@ who want to prepare recordings for tools such as BirdNET Analyzer without first
 opening a multi-gigabyte file in a GUI.
 
 Nightjar does **not** identify birds, upload audio, alter the source recording,
-or bundle any BirdNET model. Exported manifests omit source paths and recording
-metadata by default.
+or bundle any BirdNET model. Exported manifests omit source filenames, paths,
+and recording metadata by default.
 
 ## Install
 
@@ -67,8 +67,9 @@ input could not be read or decoded, and `4` means output creation failed.
 
 - Source audio is never modified.
 - Clip names include their one-based order and relative start timestamp.
-- `manifest.json` uses schema `nightjar-manifest/v1` and redacts the source path
-  unless explicitly requested.
+- `manifest.json` uses schema `nightjar-manifest/v1`. Its `source.name` and
+  `source.path` are `null` by default because a filename can reveal a location;
+  `--include-source-path` explicitly includes both.
 - `queue.csv` contains relative time ranges and clip/thumbnail paths for easy
   import or selection.
 - Resume state is local implementation data; moving or deleting it starts a new

@@ -43,7 +43,7 @@ fn documented_inspect_example_is_json_scriptable() {
 #[test]
 fn slice_writes_private_manifest_and_resumes() {
     let temp = tempfile::tempdir().unwrap();
-    let input = temp.path().join("AudioMoth-site-51.wav");
+    let input = temp.path().join("SecretMarsh_51.501N_-0.142W.wav");
     let output = temp.path().join("queue");
     fixture(&input, 25);
 
@@ -68,6 +68,13 @@ fn slice_writes_private_manifest_and_resumes() {
         serde_json::from_slice(&fs::read(output.join("manifest.json")).unwrap()).unwrap();
     assert_eq!(manifest["chunks"].as_array().unwrap().len(), 3);
     assert!(manifest["source"]["path"].is_null());
+    assert!(manifest["source"]["name"].is_null());
+    assert!(
+        !fs::read_to_string(output.join("manifest.json"))
+            .unwrap()
+            .contains("SecretMarsh_51.501N_-0.142W.wav"),
+        "a location-bearing filename must not leave the private checkpoint by default"
+    );
     assert_eq!(manifest["privacy"]["source_path_included"], false);
     assert!(output.join("clip_0001_00-00-00.wav").is_file());
     assert!(output.join("clip_0001_00-00-00.svg").is_file());
@@ -106,6 +113,41 @@ fn slice_writes_private_manifest_and_resumes() {
     let result: serde_json::Value = serde_json::from_slice(&repaired.stdout).unwrap();
     assert_eq!(result["chunks_reused"], 2);
     assert!(damaged.metadata().unwrap().len() > 44);
+}
+
+#[test]
+fn source_filename_is_exported_only_with_explicit_path_opt_in() {
+    let temp = tempfile::tempdir().unwrap();
+    let input = temp.path().join("SecretMarsh_51.501N_-0.142W.wav");
+    let output = temp.path().join("queue");
+    fixture(&input, 12);
+
+    let result = Command::new(env!("CARGO_BIN_EXE_nightjar"))
+        .args([
+            "--json",
+            "slice",
+            input.to_str().unwrap(),
+            "--output",
+            output.to_str().unwrap(),
+            "--chunk-seconds",
+            "10",
+            "--include-source-path",
+        ])
+        .output()
+        .unwrap();
+    assert!(result.status.success());
+    let manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    assert_eq!(
+        manifest["source"]["name"],
+        "SecretMarsh_51.501N_-0.142W.wav"
+    );
+    assert!(
+        manifest["source"]["path"]
+            .as_str()
+            .unwrap()
+            .ends_with("SecretMarsh_51.501N_-0.142W.wav")
+    );
 }
 
 #[test]
@@ -150,4 +192,30 @@ fn missing_input_has_documented_machine_readable_exit() {
     let error: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
     assert_eq!(error["status"], "error");
     assert_eq!(error["exit_code"], 3);
+}
+
+#[test]
+fn json_argument_validation_failure_is_a_single_stdout_object() {
+    let temp = tempfile::tempdir().unwrap();
+    let input = temp.path().join("night.wav");
+    fixture(&input, 12);
+    let result = Command::new(env!("CARGO_BIN_EXE_nightjar"))
+        .args([
+            "--json",
+            "slice",
+            input.to_str().unwrap(),
+            "--output",
+            temp.path().join("queue").to_str().unwrap(),
+            "--chunk-seconds",
+            "9",
+        ])
+        .output()
+        .unwrap();
+    assert_eq!(result.status.code(), Some(2));
+    assert!(result.stderr.is_empty());
+    let error: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(error["status"], "error");
+    assert_eq!(error["error"], "invalid_arguments");
+    assert_eq!(error["exit_code"], 2);
+    assert!(error["message"].as_str().unwrap().contains("9"));
 }

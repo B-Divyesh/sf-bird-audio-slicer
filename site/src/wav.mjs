@@ -71,3 +71,16 @@ export function clock(seconds) {
   const secs = whole % 60;
   return [hours, minutes, secs].map((value) => String(value).padStart(2, '0')).join(':');
 }
+
+export function createPrivatePreviewManifest({ fileName, fileBytes, audio, chunkSeconds, ranges }) {
+  // A filename is deliberately accepted but never serialized: recorder names
+  // often carry a site or coordinate even when the file itself stays local.
+  void fileName;
+  return {
+    schema: 'nightjar-manifest/v1-preview',
+    privacy: { source_path_included: false, note: 'Generated locally; source filename, path, and recording metadata omitted.' },
+    source: { name: null, path: null, file_bytes: fileBytes, sample_rate_hz: audio.sampleRate, channels: audio.channels, duration_seconds: audio.duration },
+    settings: { mode: 'fixed', chunk_seconds: chunkSeconds },
+    chunks: ranges.map((range) => ({ index: range.index, start_seconds: range.start, end_seconds: range.end, start_timestamp: clock(range.start), end_timestamp: clock(range.end), status: 'planned' }))
+  };
+}

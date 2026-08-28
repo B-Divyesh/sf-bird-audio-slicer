@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { clock, parseWavHeader, planFixed } from '../src/wav.mjs';
+import { clock, createPrivatePreviewManifest, parseWavHeader, planFixed } from '../src/wav.mjs';
 
 function wavHeader({ seconds = 25, sampleRate = 8000, channels = 1, bits = 16 } = {}) {
   const blockAlign = channels * bits / 8;
@@ -31,4 +31,19 @@ test('plans a final remainder and stable timestamps', () => {
 test('rejects invalid input and unsafe clip lengths', () => {
   assert.throws(() => parseWavHeader(new ArrayBuffer(44), 44), /RIFF or RF64/);
   assert.throws(() => planFixed(25, 2), /between 10/);
+});
+
+test('preview manifest never exports a location-bearing selected filename', () => {
+  const audio = parseWavHeader(wavHeader().buffer, 400044);
+  const manifest = createPrivatePreviewManifest({
+    fileName: 'SecretMarsh_51.501N_-0.142W.wav',
+    fileBytes: 400044,
+    audio,
+    chunkSeconds: 10,
+    ranges: planFixed(audio.duration, 10)
+  });
+  const exported = JSON.stringify(manifest);
+  assert.equal(manifest.source.name, null);
+  assert.equal(manifest.source.path, null);
+  assert.ok(!exported.includes('SecretMarsh_51.501N_-0.142W.wav'));
 });

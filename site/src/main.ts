@@ -1,5 +1,5 @@
 import './style.css';
-import { clock, parseWavHeader, planFixed } from './wav.mjs';
+import { clock, createPrivatePreviewManifest, parseWavHeader, planFixed } from './wav.mjs';
 
 const form = document.querySelector<HTMLFormElement>('#planner-form')!;
 const fileInput = document.querySelector<HTMLInputElement>('#recording')!;
@@ -77,13 +77,13 @@ form.addEventListener('submit', async (event) => {
       fact('Size', formatBytes(file.size))
     );
     remaining.textContent = ranges.length > 8 ? `Showing 8 of ${ranges.length.toLocaleString()} planned clips.` : `Showing all ${ranges.length.toLocaleString()} planned clips.`;
-    currentManifest = {
-      schema: 'nightjar-manifest/v1-preview',
-      privacy: { source_path_included: false, note: 'Generated locally; source path and recording metadata omitted.' },
-      source: { name: file.name, file_bytes: file.size, sample_rate_hz: audio.sampleRate, channels: audio.channels, duration_seconds: audio.duration },
-      settings: { mode: 'fixed', chunk_seconds: chunkSeconds },
-      chunks: ranges.map((range) => ({ index: range.index, start_seconds: range.start, end_seconds: range.end, start_timestamp: clock(range.start), end_timestamp: clock(range.end), status: 'planned' }))
-    };
+    currentManifest = createPrivatePreviewManifest({
+      fileName: file.name,
+      fileBytes: file.size,
+      audio,
+      chunkSeconds,
+      ranges
+    });
     setState('result');
   } catch (error) {
     errorText.textContent = error instanceof Error ? error.message : 'Nightjar could not read this WAV header.';
