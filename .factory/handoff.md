@@ -81,7 +81,7 @@ Static deployment target: Azure Static Web App `sf-bird-audio-slicer`
 `dist/site`; the release CLI is `dist/bin/nightjar`.
 
 Deployed to production on 28 August 2026 from repair commit
-`bde6710c78bfb9adf4155c944d299f2e1c45e057` using
+`bde671063183c4626575424e955f6d303c5a1fcf` using
 `@azure/static-web-apps-cli@2.0.10` and the configured Static Web App
 deployment token. Azure reported the production environment Ready at
 `2026-08-28T00:48:18.354105Z`.
