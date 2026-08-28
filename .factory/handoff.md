@@ -80,9 +80,24 @@ Static deployment target: Azure Static Web App `sf-bird-audio-slicer`
 `https://bird-audio-slicer.sociobot.in`). The deployable directory is
 `dist/site`; the release CLI is `dist/bin/nightjar`.
 
-The static upload and live-header/identity verification are performed after
-the repair commit is pushed; this section is updated with the deployed commit
-and live response evidence immediately afterward.
+Deployed to production on 28 August 2026 from repair commit
+`bde6710c78bfb9adf4155c944d299f2e1c45e057` using
+`@azure/static-web-apps-cli@2.0.10` and the configured Static Web App
+deployment token. Azure reported the production environment Ready at
+`2026-08-28T00:48:18.354105Z`.
+
+Live verification of `https://bird-audio-slicer.sociobot.in/` confirmed:
+
+- Homepage SHA-256 exactly matches `dist/site/index.html`.
+- `Referrer-Policy: no-referrer`, `Permissions-Policy: camera=(),
+  microphone=(), geolocation=()`, `X-Content-Type-Options: nosniff`, and the
+  configured same-origin CSP are present.
+- The hashed home JS is served with
+  `Cache-Control: public, max-age=31536000, immutable` (the HTML remains
+  short-lived at 30 seconds as intended for updates).
+- Live Chromium at 390×844 found the expected title and one H1, skip link as
+  the first Tab target, no console errors, no third-party requests, and zero
+  axe WCAG 2 A/AA + 2.1 AA violations.
 
 Do not publish the crate from this worker. The ready-to-publish verification
 command is `cargo package`; registry credentials remain factory-owned.
