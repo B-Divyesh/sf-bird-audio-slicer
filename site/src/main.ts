@@ -108,7 +108,6 @@ copyButton.addEventListener('click', async () => {
   const command = document.querySelector<HTMLElement>('#install-command')!.textContent?.split('\n')[0] ?? '';
   try {
     await navigator.clipboard.writeText(command);
-    copyButton.textContent = 'Install command copied';
     copyStatus.textContent = 'The install command is on your clipboard.';
   } catch {
     copyStatus.textContent = 'Clipboard access was blocked. Select the install command and copy it.';
@@ -121,31 +120,39 @@ window.addEventListener('online', updateConnection);
 window.addEventListener('offline', updateConnection);
 updateConnection();
 
-function focusHash() {
-  if (!location.hash) return;
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+function routeHeading() {
+  if (!location.hash) return document.querySelector<HTMLElement>('#hero-title');
   const target = document.querySelector<HTMLElement>(location.hash);
-  if (!target) return;
-  const heading = target.matches('h1,h2') ? target : target.querySelector<HTMLElement>('h1,h2');
-  if (heading) {
-    heading.focus({ preventScroll: true });
-    routeStatus.textContent = heading.textContent ?? '';
-  }
+  return target?.matches('h1,h2') ? target : target?.querySelector<HTMLElement>('h1,h2');
+}
+
+function restoreRoutePosition() {
+  const heading = routeHeading();
+  if (!heading) return;
+  heading.focus({ preventScroll: true });
+  if (location.hash) heading.scrollIntoView({ block: 'start', behavior: 'auto' });
+  else window.scrollTo({ top: 0, behavior: 'auto' });
+  routeStatus.textContent = heading.textContent ?? document.title;
+}
+
+function scheduleRouteRestore() {
+  setTimeout(restoreRoutePosition, 100);
 }
 document.addEventListener('click', (event) => {
   const link = (event.target as Element).closest<HTMLAnchorElement>('a[href^="#"],a[href^="/#"]');
-  if (link && new URL(link.href).pathname === location.pathname) setTimeout(focusHash, 0);
+  if (!link) return;
+  const target = new URL(link.href);
+  if (target.pathname !== location.pathname || target.search !== location.search) return;
+  event.preventDefault();
+  history.pushState(null, '', `${target.pathname}${target.search}${target.hash}`);
+  scheduleRouteRestore();
 });
-window.addEventListener('hashchange', focusHash);
-window.addEventListener('popstate', () => {
-  if (location.hash) focusHash();
-  else {
-    const heading = document.querySelector<HTMLElement>('#hero-title');
-    heading?.focus({ preventScroll: true });
-    routeStatus.textContent = heading?.textContent ?? document.title;
-  }
-});
+window.addEventListener('hashchange', scheduleRouteRestore);
+window.addEventListener('popstate', scheduleRouteRestore);
 window.addEventListener('pageshow', () => {
-  if (location.hash) focusHash();
+  if (location.hash) scheduleRouteRestore();
 });
 
 const isDemo = location.pathname.replace(/\/+$/, '') === '/demo' || new URLSearchParams(location.search).get('demo') === '1';

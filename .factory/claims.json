@@ -4,7 +4,7 @@
     "claim": "The demo loads a bundled 20-second recording and shows two planned clips without saving user data.",
     "where": "landing first screen, /demo banner and result, README",
     "test": "npm run test:browser -- --grep @claim:browser-demo-one-click",
-    "sandbox": "fresh Chromium context at /demo; assert sample result, banner, reset, and exit action"
+    "sandbox": "fresh 390px Chromium context at /demo; assert sample result, bounded layout, scrollable table, sticky banner, reset, isolated stores, and exit action"
   },
   {
     "id": "browser-private",
@@ -25,7 +25,7 @@
     "claim": "Home, demo, privacy, terms, and not-found pages have route metadata, accessible structure, and no third-party page requests.",
     "where": "all site routes",
     "test": "npm run test:browser -- --grep @claim:site-structure",
-    "sandbox": "production build in Chromium; inspect titles, metadata, focus, landmarks, heading count, product 404, and axe results"
+    "sandbox": "production build in Chromium; inspect titles, metadata, landmarks, product 404, axe results, and visible focus after Back/Forward at 390px and 1440px"
   },
   {
     "id": "cli-demo",

@@ -21,7 +21,6 @@ It shows the same recording and saves nothing to your browser data.
 ## Install
 
 Installation from source requires Rust 1.85 or newer.
-This repository does not provide prebuilt binaries.
 
 ```sh
 cargo install --path .
@@ -60,7 +59,7 @@ Each output directory contains these files:
 - `queue.csv` with one time range per clip
 - numbered WAV clips with relative start timestamps
 - SVG spectrograms
-- a private `.nightjar-state.json` checkpoint
+- a `.nightjar-state.json` file used to continue interrupted runs
 
 Run the same command again to continue an interrupted batch.
 Nightjar reuses complete clips and repairs missing or incomplete clips.
@@ -112,8 +111,6 @@ See [Privacy](https://bird-audio-slicer.sociobot.in/privacy/) and [Terms](https:
 
 ## Develop and verify
 
-Development requires Node.js 20+, npm, and Rust 1.85+.
-
 ```sh
 npm ci
 npm test
@@ -124,6 +121,5 @@ cargo package --allow-dirty
 ```
 
 `npm run build` creates the static site in `dist/site` and the CLI in `dist/bin`.
-The crate is ready for the factory to publish, but this repository does not publish it automatically.
 
 Nightjar Slicer uses the [MIT License](LICENSE).

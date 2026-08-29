@@ -1,6 +1,6 @@
 # Landing-page copy audit
 
-Audited 28 August 2026. Counts are whitespace-delimited; hyphenated terms count as one word.
+Audited 29 August 2026. Counts are whitespace-delimited; hyphenated terms count as one word.
 Commands, table values, navigation labels, and form labels are included for completeness.
 
 | Copy | Words | Result |
@@ -33,7 +33,8 @@ Commands, table values, navigation labels, and form labels are included for comp
 | Enter 10 to 3,600 seconds. | 6 | Pass |
 | Plan WAV clips | 3 | Pass |
 | No recording selected | 3 | Pass |
-| Your clip times and redacted manifest will appear here. | 9 | Pass |
+| Your clip times will appear here. | 6 | Pass |
+| The downloaded plan omits your recording name and path. | 9 | Pass |
 | Reading WAV details… | 3 | Pass |
 | Clip plan ready | 3 | Pass |
 | Showing 8 of [N] planned clips. | 6 | Pass |
@@ -53,8 +54,7 @@ Commands, table values, navigation labels, and form labels are included for comp
 | Copy chosen clips into one folder, then choose that folder in BirdNET Analyzer. | 13 | Pass |
 | Install from source | 3 | Pass |
 | Install and run Nightjar | 4 | Pass |
-| Installation requires Rust 1.85 or newer. | 6 | Pass |
-| The repository does not offer prebuilt binaries. | 7 | Pass |
+| Install from source with Rust 1.85 or newer. | 8 | Pass |
 | Copy install command | 3 | Pass |
 | The install command is on your clipboard. | 7 | Pass |
 | Clipboard access was blocked. | 4 | Pass |
@@ -68,7 +68,7 @@ Commands, table values, navigation labels, and form labels are included for comp
 | It writes clips, manifests, and spectrograms for your review. | 9 | Pass |
 | Split long bird recordings into clips locally. | 7 | Pass |
 | Project on GitHub (external) | 4 | Pass |
-| Built by Param Factory · v0.1.0 · build polish-1 | 8 | Pass |
+| Built by Param Factory · v0.1.0 · build polish-2 | 8 | Pass |
 
 ## Demo-only copy
 

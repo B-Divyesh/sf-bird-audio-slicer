@@ -13,14 +13,45 @@ function wavPayload(seconds = 25, sampleRate = 8000) {
 }
 
 test('@claim:browser-demo-one-click demo loads sample, resets, and exits without persistence', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.evaluate(() => localStorage.setItem('real:sentinel', 'keep-me'));
   await page.goto('/demo/');
   await expect(page).toHaveTitle('Demo — Nightjar Slicer');
   await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
   await expect(page.getByText('2 clips from 00:00:20')).toBeVisible();
   await expect(page.getByText('Dawn Marsh sample')).toBeVisible();
+
+  const outputBox = await page.locator('#planner-output').boundingBox();
+  expect(outputBox.x).toBeGreaterThanOrEqual(0);
+  expect(outputBox.x + outputBox.width).toBeLessThanOrEqual(390);
+  const tableOverflow = await page.locator('.table-wrap').evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+    overflowX: getComputedStyle(element).overflowX
+  }));
+  expect(tableOverflow.scrollWidth).toBeGreaterThan(tableOverflow.clientWidth);
+  expect(tableOverflow.overflowX).toBe('auto');
+
+  await page.evaluate(() => scrollTo(0, 1200));
+  await expect.poll(() => page.locator('#demo-banner').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(0);
+  await page.getByRole('button', { name: 'Download clip plan' }).scrollIntoViewIfNeeded();
+  await expect(page.getByRole('button', { name: 'Download clip plan' })).toBeInViewport();
   await page.getByRole('button', { name: 'Reset demo' }).click();
   await expect(page.getByText('2 clips from 00:00:20')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Start for real' })).toHaveAttribute('href', '/#planner');
+  expect(await page.evaluate(() => localStorage.getItem('real:sentinel'))).toBe('keep-me');
+  const demoStores = await page.evaluate(async () => ({
+    cookies: document.cookie,
+    localKeys: Object.keys(localStorage),
+    session: sessionStorage.length,
+    indexed: (await indexedDB.databases()).length
+  }));
+  expect(demoStores).toEqual({ cookies: '', localKeys: ['real:sentinel'], session: 0, indexed: 0 });
+  await page.getByRole('link', { name: 'Start for real' }).click();
+  await expect(page).toHaveURL(/\/#planner$/);
+  await expect(page.locator('#demo-banner')).toBeHidden();
+  await expect(page.getByText('No recording selected')).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('real:sentinel'))).toBe('keep-me');
   await expect(page.locator('h1')).toHaveCount(1);
   await page.goto('/?demo=1');
   await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
@@ -112,14 +143,34 @@ test('@claim:site-structure routes have metadata, focus, accessibility, and a pr
   await expect(page.locator('h1')).toBeFocused();
   await page.goto('/404.html');
   await expect(page).toHaveTitle('Page not found — Nightjar Slicer');
+  await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Return to Nightjar Slicer' })).toBeVisible();
   expect(requests.every((url) => new URL(url).origin === new URL(page.url()).origin)).toBe(true);
   expect(errors).toEqual([]);
+  for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+    await page.getByRole('link', { name: 'Install the CLI' }).click();
+    await expect(page.locator('#install-title')).toBeFocused();
+    await expect(page.locator('#install-title')).toBeInViewport();
+    await page.goBack();
+    await expect(page.locator('#hero-title')).toBeFocused();
+    await expect(page.locator('#hero-title')).toBeInViewport();
+    expect(await page.evaluate(() => scrollY)).toBe(0);
+    const heroBox = await page.locator('#hero-title').boundingBox();
+    expect(heroBox.y).toBeGreaterThanOrEqual(0);
+    expect(heroBox.y + heroBox.height).toBeLessThanOrEqual(viewport.height);
+    await page.goForward();
+    await expect(page.locator('#install-title')).toBeFocused();
+    await expect(page.locator('#install-title')).toBeInViewport();
+    const installBox = await page.locator('#install-title').boundingBox();
+    expect(installBox.y).toBeGreaterThanOrEqual(0);
+    expect(installBox.y + installBox.height).toBeLessThanOrEqual(viewport.height);
+  }
+
   await page.goto('/');
-  await page.getByRole('link', { name: 'Install the CLI' }).click();
-  await expect(page.locator('#install-title')).toBeFocused();
-  await page.goBack();
-  await expect(page.locator('#hero-title')).toBeFocused();
+  await page.getByRole('button', { name: 'Copy install command' }).click();
+  await expect(page.getByRole('button', { name: 'Copy install command' })).toBeVisible();
 });
 
 test('mobile first screen is complete and layout has no horizontal overflow', async ({ page }) => {

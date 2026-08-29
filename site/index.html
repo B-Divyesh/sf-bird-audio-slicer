@@ -72,7 +72,7 @@
             <button class="button primary" type="submit">Plan WAV clips <span aria-hidden="true">→</span></button>
           </form>
           <div id="planner-output" class="planner-output empty" aria-live="polite" aria-busy="false">
-            <div id="empty-state" class="empty-state"><span class="moon-mark" aria-hidden="true"></span><h3>No recording selected</h3><p>Your clip times and redacted manifest will appear here.</p></div>
+            <div id="empty-state" class="empty-state"><span class="moon-mark" aria-hidden="true"></span><h3>No recording selected</h3><p>Your clip times will appear here. The downloaded plan omits your recording name and path.</p></div>
             <div id="loading-state" class="loading-state" hidden><span class="loading-rule" aria-hidden="true"></span><p>Reading WAV details…</p></div>
             <div id="result-state" hidden>
               <div class="result-summary"><p class="section-label">Clip plan ready</p><p id="result-title" class="result-title"></p><dl id="recording-facts"></dl></div>
@@ -93,7 +93,7 @@
         </ol>
       </section>
       <section id="install" class="section install" aria-labelledby="install-title">
-        <div><p class="section-label">Install from source</p><h2 id="install-title" tabindex="-1">Install and run Nightjar</h2><p>Installation requires Rust 1.85 or newer. The repository does not offer prebuilt binaries.</p></div>
+        <div><p class="section-label">Install from source</p><h2 id="install-title" tabindex="-1">Install and run Nightjar</h2><p>Install from source with Rust 1.85 or newer.</p></div>
         <div class="terminal" aria-label="Installation commands"><div class="terminal-bar"><span>INSTALL AND RUN NIGHTJAR</span><button id="copy-command" type="button">Copy install command</button></div><pre><code id="install-command">cargo install --git https://github.com/B-Divyesh/sf-bird-audio-slicer
 nightjar demo</code></pre><p id="copy-status" class="copy-status" role="status"></p></div>
       </section>
@@ -111,7 +111,7 @@ Demo files: /tmp/nightjar-demo-…/clips</code></pre></div>
       <a class="brand footer-brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span>Nightjar / Slicer</span></a>
       <p>Split long bird recordings into clips locally.</p>
       <nav aria-label="Footer links"><a href="/demo/">Demo</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-bird-audio-slicer" rel="external">Project on GitHub <span class="sr-only">(external)</span></a></nav>
-      <p>Built by Param Factory · v0.1.0 · build polish-1</p>
+      <p>Built by Param Factory · v0.1.0 · build polish-2</p>
     </footer>
     <script type="module" src="/src/main.ts"></script>
   </body>
