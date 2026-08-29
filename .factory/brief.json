@@ -4,7 +4,7 @@
   "territory": "utilities",
   "user": "Birders recording long overnight AudioMoth or field-recorder files who need to split, sample, and queue clips for BirdNET analysis without crashing a GUI or waiting through repeated extraction.",
   "smallest_useful_product": "Local CLI that reads WAV/FLAC headers, makes fixed or silence-aware chunks, emits a timestamped manifest and spectrogram thumbnails, and can resume a failed batch.",
-  "success_measure": "On 4 GB reference recordings, it creates a resume-safe manifest without exceeding a 1 GB memory ceiling and enables 10 pilot users to submit at least one selected chunk to their existing analyzer.",
+  "success_measure": "On a 4 GB reference recording, it creates a resume-safe manifest below a 1 GB memory ceiling; a clean user can run the bundled demo and export selected clips for an existing analyzer.",
   "artifact_class": "cli",
   "monetization": "free",
   "constraints": "Do not bundle BirdNET weights or claim identification accuracy; preserve original recordings; make sensitive-location metadata removal the default in exported manifests."

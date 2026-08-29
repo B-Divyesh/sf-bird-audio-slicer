@@ -37,6 +37,24 @@ enum Command {
     Inspect(InspectArgs),
     /// Split a recording into resume-safe WAV clips and queue metadata.
     Slice(SliceArgs),
+    /// Run the slicer on the bundled 20-second field sample.
+    Demo,
+    /// Copy chosen clips into a folder for BirdNET Analyzer.
+    Select(SelectArgs),
+}
+
+#[derive(Debug, Args)]
+struct SelectArgs {
+    /// Nightjar manifest whose clips you want to select.
+    manifest: PathBuf,
+
+    /// Directory to create for the selected WAV clips.
+    #[arg(short, long)]
+    output: PathBuf,
+
+    /// One-based clip numbers, separated by commas.
+    #[arg(long, value_delimiter = ',', num_args = 1.., required = true)]
+    clips: Vec<usize>,
 }
 
 #[derive(Debug, Args)]
@@ -170,6 +188,20 @@ struct ManifestChunk {
     status: &'static str,
 }
 
+#[derive(Debug, Deserialize)]
+struct SelectionManifest {
+    schema: String,
+    chunks: Vec<SelectionChunk>,
+}
+
+#[derive(Debug, Deserialize)]
+struct SelectionChunk {
+    index: usize,
+    start_timestamp: String,
+    end_timestamp: String,
+    file: String,
+}
+
 #[derive(Debug, Serialize)]
 struct SliceResult {
     status: &'static str,
@@ -273,7 +305,104 @@ fn run(cli: &Cli) -> Result<(), AppError> {
             Ok(())
         }
         Command::Slice(args) => slice(args, cli.json),
+        Command::Demo => demo(cli.json),
+        Command::Select(args) => select(args, cli.json),
     }
+}
+
+fn demo(json: bool) -> Result<(), AppError> {
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis();
+    let root = std::env::temp_dir().join(format!("nightjar-demo-{}-{stamp}", std::process::id()));
+    let input = root.join("DawnMarsh_20s.wav");
+    let output = root.join("clips");
+    fs::create_dir_all(&root)
+        .map_err(|error| AppError::output(format!("cannot create demo directory: {error}")))?;
+    fs::write(&input, include_bytes!("../examples/nightjar-demo.wav"))
+        .map_err(|error| AppError::output(format!("cannot write demo recording: {error}")))?;
+    let args = SliceArgs {
+        input,
+        output: output.clone(),
+        chunk_seconds: 10,
+        mode: SliceMode::Fixed,
+        search_window_seconds: 12,
+        no_thumbnails: false,
+        include_source_path: false,
+        force: false,
+    };
+    slice(&args, json)?;
+    if !json {
+        println!("Demo files: {}", output.display());
+        println!("Open manifest.json or import selected WAV clips into BirdNET Analyzer.");
+    }
+    Ok(())
+}
+
+fn select(args: &SelectArgs, json: bool) -> Result<(), AppError> {
+    let manifest: SelectionManifest = read_json(&args.manifest)?;
+    if manifest.schema != "nightjar-manifest/v1" {
+        return Err(AppError::input(
+            "the manifest does not use schema nightjar-manifest/v1",
+        ));
+    }
+    let source_dir = args.manifest.parent().unwrap_or_else(|| Path::new("."));
+    fs::create_dir_all(&args.output).map_err(|error| {
+        AppError::output(format!("cannot create {}: {error}", args.output.display()))
+    })?;
+    let mut selected = Vec::new();
+    for requested in &args.clips {
+        let chunk = manifest
+            .chunks
+            .iter()
+            .find(|chunk| chunk.index == *requested)
+            .ok_or_else(|| {
+                AppError::input(format!("clip {requested} is not present in the manifest"))
+            })?;
+        let file_name = Path::new(&chunk.file)
+            .file_name()
+            .ok_or_else(|| AppError::input(format!("clip {requested} has an invalid file path")))?;
+        let source = source_dir.join(&chunk.file);
+        let destination = args.output.join(file_name);
+        fs::copy(&source, &destination).map_err(|error| {
+            AppError::output(format!("cannot copy {}: {error}", source.display()))
+        })?;
+        selected.push((chunk, destination));
+    }
+    let mut csv = String::from("index,start_timestamp,end_timestamp,file\n");
+    for (chunk, destination) in &selected {
+        csv.push_str(&format!(
+            "{},{},{},{}\n",
+            chunk.index,
+            chunk.start_timestamp,
+            chunk.end_timestamp,
+            destination
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+        ));
+    }
+    atomic_text(&args.output.join("selection.csv"), &csv)?;
+    if json {
+        println!(
+            "{}",
+            serde_json::json!({
+                "status": "ready",
+                "clips_selected": selected.len(),
+                "output": args.output,
+                "next_step": "Choose this output folder in BirdNET Analyzer."
+            })
+        );
+    } else {
+        println!(
+            "Ready: {} selected clip(s) in {}",
+            selected.len(),
+            args.output.display()
+        );
+        println!("Next: choose this folder in BirdNET Analyzer.");
+    }
+    Ok(())
 }
 
 fn open_audio(path: &Path) -> Result<OpenAudio, AppError> {
@@ -373,7 +502,8 @@ fn slice(args: &SliceArgs, json: bool) -> Result<(), AppError> {
     };
     let fingerprint = fingerprint(&args.input, &info, total_frames)?;
     let state_path = args.output.join(STATE_FILE);
-    let mut state = if state_path.exists() {
+    let had_state = state_path.exists();
+    let mut state = if had_state {
         let previous: ResumeState = read_json(&state_path)?;
         if previous.fingerprint == fingerprint && previous.settings == settings {
             previous
@@ -403,6 +533,9 @@ fn slice(args: &SliceArgs, json: bool) -> Result<(), AppError> {
         )?
     };
 
+    if !had_state {
+        recover_existing(&args.output, &mut state);
+    }
     validate_completed(&args.output, &mut state);
     atomic_json(&state_path, &state)?;
     let reused = state.completed.len();
@@ -441,6 +574,37 @@ fn slice(args: &SliceArgs, json: bool) -> Result<(), AppError> {
         println!("Manifest: {}", result.manifest);
     }
     Ok(())
+}
+
+fn recover_existing(output: &Path, state: &mut ResumeState) {
+    for index in 0..state.boundaries.len().saturating_sub(1) {
+        let stem = chunk_stem(
+            index,
+            state.boundaries[index],
+            state.fingerprint.sample_rate_hz,
+        );
+        let clip = output.join(format!("{stem}.wav"));
+        let expected_frames = state.boundaries[index + 1] - state.boundaries[index];
+        let valid_audio = hound::WavReader::open(&clip)
+            .map(|reader| {
+                reader.spec().sample_rate == state.fingerprint.sample_rate_hz
+                    && reader.spec().channels == state.fingerprint.channels
+                    && reader.duration() as u64 == expected_frames
+            })
+            .unwrap_or(false);
+        let valid_thumbnail =
+            !state.settings.thumbnails || output.join(format!("{stem}.svg")).is_file();
+        if valid_audio && valid_thumbnail {
+            if let Ok(metadata) = clip.metadata() {
+                state.completed.insert(
+                    index,
+                    CompletedClip {
+                        bytes: metadata.len(),
+                    },
+                );
+            }
+        }
+    }
 }
 
 fn make_state(

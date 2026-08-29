@@ -6,10 +6,10 @@ function text(view, offset, length) {
 
 export function parseWavHeader(buffer, fileSize) {
   const view = new DataView(buffer);
-  if (view.byteLength < 44) throw new Error('This file is too small to contain a WAV header.');
+  if (view.byteLength < 44) throw new Error('This file is too small to be a complete WAV recording. Choose another file.');
   const container = text(view, 0, 4);
   if ((container !== 'RIFF' && container !== 'RF64') || text(view, 8, 4) !== 'WAVE') {
-    throw new Error('This does not look like a RIFF or RF64 WAV recording.');
+    throw new Error('This is not a supported WAV file. Choose a PCM or float WAV recording.');
   }
 
   let offset = 12;
@@ -44,13 +44,13 @@ export function parseWavHeader(buffer, fileSize) {
     if (next <= offset || next > view.byteLength) break;
     offset = next;
   }
-  if (!format) throw new Error('The WAV format block was not found in the first part of this file.');
-  if (!dataBytes) throw new Error('The WAV audio data block was not found in the first part of this file.');
-  if (![1, 3].includes(format.encoding)) throw new Error(`WAV encoding ${format.encoding} is not supported by this planner. The CLI may still support it.`);
-  if (!format.channels || !format.sampleRate || !format.byteRate || !format.blockAlign) throw new Error('The WAV header has invalid channel or sample-rate values.');
+  if (!format) throw new Error('Nightjar could not read this WAV. Export it as a standard PCM WAV and try again.');
+  if (!dataBytes) throw new Error('Nightjar could not read this WAV. Export it as a standard PCM WAV and try again.');
+  if (![1, 3].includes(format.encoding)) throw new Error(`Encoding ${format.encoding} is not supported here. Choose a PCM or float WAV, or run nightjar inspect FILE in the CLI.`);
+  if (!format.channels || !format.sampleRate || !format.byteRate || !format.blockAlign) throw new Error('This WAV has invalid audio details. Re-export it as PCM WAV or choose another recording.');
   const frames = Math.floor(dataBytes / format.blockAlign);
   const duration = frames / format.sampleRate;
-  if (!Number.isFinite(duration) || duration <= 0) throw new Error('The WAV header reports no playable audio.');
+  if (!Number.isFinite(duration) || duration <= 0) throw new Error('This WAV contains no playable audio. Re-export it as PCM WAV or choose another recording.');
   return { ...format, container, dataBytes, frames, duration };
 }
 

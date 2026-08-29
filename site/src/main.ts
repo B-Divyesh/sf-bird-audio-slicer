@@ -14,6 +14,7 @@ const facts = document.querySelector<HTMLElement>('#recording-facts')!;
 const resultTitle = document.querySelector<HTMLElement>('#result-title')!;
 const remaining = document.querySelector<HTMLElement>('#remaining-clips')!;
 const download = document.querySelector<HTMLButtonElement>('#download-manifest')!;
+const routeStatus = document.querySelector<HTMLElement>('#route-status')!;
 let currentManifest: Record<string, unknown> | null = null;
 
 function setState(state: 'empty' | 'loading' | 'result') {
@@ -42,13 +43,34 @@ function fact(term: string, description: string) {
   return group;
 }
 
+function showPlan(name: string, fileBytes: number, audio: ReturnType<typeof parseWavHeader>, chunkSeconds: number) {
+  const ranges = planFixed(audio.duration, chunkSeconds);
+  rows.replaceChildren(...ranges.slice(0, 8).map((range) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<th scope="row">${String(range.index).padStart(4, '0')}</th><td>${clock(range.start)}</td><td>${clock(range.end)}</td><td><span class="ready-dot" aria-hidden="true"></span>Planned</td>`;
+    return row;
+  }));
+  resultTitle.textContent = `${ranges.length.toLocaleString()} clips from ${clock(audio.duration)}`;
+  facts.replaceChildren(
+    fact('Recording', name),
+    fact('Format', `${audio.container} · ${audio.bitsPerSample}-bit`),
+    fact('Audio', `${audio.sampleRate.toLocaleString()} Hz · ${audio.channels} channel`),
+    fact('Size', formatBytes(fileBytes))
+  );
+  remaining.textContent = ranges.length > 8
+    ? `Showing 8 of ${ranges.length.toLocaleString()} planned clips.`
+    : `Showing all ${ranges.length.toLocaleString()} planned clips.`;
+  currentManifest = createPrivatePreviewManifest({ fileName: name, fileBytes, audio, chunkSeconds, ranges });
+  setState('result');
+}
+
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   errorText.textContent = '';
   const file = fileInput.files?.[0];
   const chunkSeconds = Number(lengthInput.value);
   if (!file) {
-    errorText.textContent = 'Choose a WAV recording before planning clips.';
+    errorText.textContent = 'Choose a complete PCM or float WAV recording, then try again.';
     fileInput.focus();
     setState('empty');
     return;
@@ -58,35 +80,12 @@ form.addEventListener('submit', async (event) => {
     lengthInput.focus();
     return;
   }
-
   setState('loading');
   try {
     const header = await file.slice(0, 256 * 1024).arrayBuffer();
-    const audio = parseWavHeader(header, file.size);
-    const ranges = planFixed(audio.duration, chunkSeconds);
-    rows.replaceChildren(...ranges.slice(0, 8).map((range) => {
-      const row = document.createElement('tr');
-      row.innerHTML = `<th scope="row">${String(range.index).padStart(4, '0')}</th><td>${clock(range.start)}</td><td>${clock(range.end)}</td><td><span class="ready-dot" aria-hidden="true"></span>Planned</td>`;
-      return row;
-    }));
-    resultTitle.textContent = `${ranges.length.toLocaleString()} clips from ${clock(audio.duration)}`;
-    facts.replaceChildren(
-      fact('Recording', file.name),
-      fact('Format', `${audio.container} · ${audio.bitsPerSample}-bit`),
-      fact('Audio', `${audio.sampleRate.toLocaleString()} Hz · ${audio.channels} ch`),
-      fact('Size', formatBytes(file.size))
-    );
-    remaining.textContent = ranges.length > 8 ? `Showing 8 of ${ranges.length.toLocaleString()} planned clips.` : `Showing all ${ranges.length.toLocaleString()} planned clips.`;
-    currentManifest = createPrivatePreviewManifest({
-      fileName: file.name,
-      fileBytes: file.size,
-      audio,
-      chunkSeconds,
-      ranges
-    });
-    setState('result');
+    showPlan(file.name, file.size, parseWavHeader(header, file.size), chunkSeconds);
   } catch (error) {
-    errorText.textContent = error instanceof Error ? error.message : 'Nightjar could not read this WAV header.';
+    errorText.textContent = error instanceof Error ? error.message : 'Nightjar could not read this WAV. Export it as PCM WAV and try again.';
     setState('empty');
   }
 });
@@ -98,7 +97,7 @@ download.addEventListener('click', () => {
   const blob = new Blob([`${JSON.stringify(currentManifest, null, 2)}\n`], { type: 'application/json' });
   const anchor = document.createElement('a');
   anchor.href = URL.createObjectURL(blob);
-  anchor.download = 'nightjar-plan.json';
+  anchor.download = 'nightjar-clip-plan.json';
   anchor.click();
   URL.revokeObjectURL(anchor.href);
 });
@@ -106,13 +105,13 @@ download.addEventListener('click', () => {
 const copyButton = document.querySelector<HTMLButtonElement>('#copy-command')!;
 const copyStatus = document.querySelector<HTMLElement>('#copy-status')!;
 copyButton.addEventListener('click', async () => {
-  const command = document.querySelector<HTMLElement>('#install-command')!.textContent ?? '';
+  const command = document.querySelector<HTMLElement>('#install-command')!.textContent?.split('\n')[0] ?? '';
   try {
     await navigator.clipboard.writeText(command);
-    copyButton.textContent = 'Copied';
-    copyStatus.textContent = 'Installation command copied to the clipboard.';
+    copyButton.textContent = 'Install command copied';
+    copyStatus.textContent = 'The install command is on your clipboard.';
   } catch {
-    copyStatus.textContent = 'Clipboard access was blocked. Select the command text to copy it.';
+    copyStatus.textContent = 'Clipboard access was blocked. Select the install command and copy it.';
   }
 });
 
@@ -121,5 +120,63 @@ function updateConnection() { offlineBanner.hidden = navigator.onLine; }
 window.addEventListener('online', updateConnection);
 window.addEventListener('offline', updateConnection);
 updateConnection();
+
+function focusHash() {
+  if (!location.hash) return;
+  const target = document.querySelector<HTMLElement>(location.hash);
+  if (!target) return;
+  const heading = target.matches('h1,h2') ? target : target.querySelector<HTMLElement>('h1,h2');
+  if (heading) {
+    heading.focus({ preventScroll: true });
+    routeStatus.textContent = heading.textContent ?? '';
+  }
+}
+document.addEventListener('click', (event) => {
+  const link = (event.target as Element).closest<HTMLAnchorElement>('a[href^="#"],a[href^="/#"]');
+  if (link && new URL(link.href).pathname === location.pathname) setTimeout(focusHash, 0);
+});
+window.addEventListener('hashchange', focusHash);
+window.addEventListener('popstate', () => {
+  if (location.hash) focusHash();
+  else {
+    const heading = document.querySelector<HTMLElement>('#hero-title');
+    heading?.focus({ preventScroll: true });
+    routeStatus.textContent = heading?.textContent ?? document.title;
+  }
+});
+window.addEventListener('pageshow', () => {
+  if (location.hash) focusHash();
+});
+
+const isDemo = location.pathname.replace(/\/+$/, '') === '/demo' || new URLSearchParams(location.search).get('demo') === '1';
+async function loadDemo() {
+  setState('loading');
+  errorText.textContent = '';
+  try {
+    const response = await fetch('/examples/nightjar-demo.wav');
+    if (!response.ok) throw new Error('The bundled sample could not be loaded. Reload the page and try again.');
+    const buffer = await response.arrayBuffer();
+    showPlan('Dawn Marsh sample', buffer.byteLength, parseWavHeader(buffer.slice(0, 256 * 1024), buffer.byteLength), 10);
+    routeStatus.textContent = 'Demo clip plan ready';
+  } catch (error) {
+    errorText.textContent = error instanceof Error ? error.message : 'The bundled sample could not be loaded. Reload the page and try again.';
+    setState('empty');
+  }
+}
+
+if (isDemo) {
+  document.body.classList.add('demo-mode');
+  document.querySelector<HTMLElement>('#demo-banner')!.hidden = false;
+  document.querySelector<HTMLElement>('#hero-title')!.textContent = 'Explore a 20-second bird recording';
+  document.querySelector<HTMLElement>('.hero .lede')!.textContent = 'This isolated sample shows two planned WAV clips. Reset it any time or start with your recording.';
+  document.title = 'Demo — Nightjar Slicer';
+  document.querySelector<HTMLLinkElement>('link[rel="canonical"]')!.href = 'https://bird-audio-slicer.sociobot.in/demo/';
+  document.querySelector<HTMLMetaElement>('meta[property="og:url"]')!.content = 'https://bird-audio-slicer.sociobot.in/demo/';
+  document.querySelector<HTMLMetaElement>('meta[property="og:title"]')!.content = 'Demo — Nightjar Slicer';
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')!.content = 'Demo — Nightjar Slicer';
+  document.querySelector<HTMLButtonElement>('#reset-demo')!.addEventListener('click', loadDemo);
+  document.querySelector<HTMLElement>('#hero-title')!.focus({ preventScroll: true });
+  void loadDemo();
+}
 
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => undefined));

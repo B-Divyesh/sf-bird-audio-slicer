@@ -3,6 +3,8 @@ dist/
 target/
 .env
 *.log
+test-results/
+playwright-report/
 graphify-out/
 .factory/evidence/
 .DS_Store

@@ -29,7 +29,7 @@ test('plans a final remainder and stable timestamps', () => {
 });
 
 test('rejects invalid input and unsafe clip lengths', () => {
-  assert.throws(() => parseWavHeader(new ArrayBuffer(44), 44), /RIFF or RF64/);
+  assert.throws(() => parseWavHeader(new ArrayBuffer(44), 44), /not a supported WAV file/);
   assert.throws(() => planFixed(25, 2), /between 10/);
 });
 

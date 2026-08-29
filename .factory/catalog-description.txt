@@ -1,0 +1,1 @@
+Split long bird recordings into local WAV clips for BirdNET Analyzer.

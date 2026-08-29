@@ -1,31 +1,22 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#101b1d">
-    <meta name="description" content="Nightjar Slicer privacy policy.">
-    <link rel="icon" href="/nightjar-mark.svg" type="image/svg+xml">
-    <title>Privacy — Nightjar Slicer</title>
-  </head>
-  <body>
-    <a class="skip-link" href="#main">Skip to main content</a>
-    <header class="site-header"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span>Nightjar / Slicer</span></a><nav aria-label="Primary navigation"><a href="/">Home</a><a href="/terms/">Terms</a></nav></header>
-    <main id="main" class="legal">
-      <p class="eyebrow">Field note / Privacy</p>
-      <h1>Recordings stay where they roost.</h1>
-      <p class="lede">Nightjar Slicer is designed for private, local use. This policy covers the CLI and this documentation site.</p>
-      <h2>The CLI</h2>
-      <p>The CLI makes no network requests and includes no telemetry. It reads the recording you name and writes only to the output directory you choose. Source recordings are never modified.</p>
-      <p>Exported manifests omit the original source filename, source path, and embedded recording metadata by default. A filename can reveal a sensitive recording location. If you pass <code>--include-source-path</code>, that local path and filename are included because you explicitly requested them.</p>
-      <h2>The browser planner</h2>
-      <p>The demo reads a small WAV header slice in your browser. It does not upload audio, retain the file, use cookies, or place data in local storage. A downloaded sample manifest is created on your device.</p>
-      <h2>The hosted site</h2>
-      <p>No third-party scripts, fonts, analytics, advertising, or tracking pixels are present. The deployment platform may retain ordinary short-lived server access logs for security and reliability.</p>
-      <h2>Your choices</h2>
-      <p>Delete an output directory to remove its clips and local checkpoint. Clear the site's browser cache to remove the offline documentation copy.</p>
-      <p class="legal-date">Effective 27 August 2026. Questions can be raised through the project's GitHub issue tracker.</p>
-    </main>
-    <footer><a href="/">Nightjar Slicer</a><nav aria-label="Legal links"><a href="/privacy/" aria-current="page">Privacy</a><a href="/terms/">Terms</a></nav></footer>
-    <script type="module" src="/src/legal.ts"></script>
-  </body>
-</html>
+<!doctype html><html lang="en"><head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#101b1d">
+  <meta name="description" content="How Nightjar Slicer handles recordings, manifests, browser data, and hosted-site requests.">
+  <link rel="canonical" href="https://bird-audio-slicer.sociobot.in/privacy/"><link rel="icon" href="/nightjar-mark.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta property="og:type" content="website"><meta property="og:site_name" content="Nightjar Slicer"><meta property="og:title" content="Privacy — Nightjar Slicer"><meta property="og:description" content="How Nightjar Slicer handles recordings and browser data."><meta property="og:url" content="https://bird-audio-slicer.sociobot.in/privacy/"><meta property="og:image" content="https://bird-audio-slicer.sociobot.in/nightjar-social.webp">
+  <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Privacy — Nightjar Slicer"><meta name="twitter:description" content="How Nightjar Slicer handles recordings and browser data."><meta name="twitter:image" content="https://bird-audio-slicer.sociobot.in/nightjar-social.webp">
+  <title>Privacy — Nightjar Slicer</title>
+</head><body>
+  <a class="skip-link" href="#main">Skip to main content</a><div id="route-status" class="sr-only" aria-live="polite"></div>
+  <header class="site-header"><a class="brand" href="/" aria-label="Nightjar Slicer home"><span class="brand-mark" aria-hidden="true"></span><span>Nightjar / Slicer</span></a><nav aria-label="Primary navigation"><a href="/demo/">Demo</a><a href="/privacy/" aria-current="page">Privacy</a><a href="/terms/">Terms</a></nav></header>
+  <main id="main" class="legal">
+    <p class="section-label">Privacy</p><h1 tabindex="-1">Your recordings remain local</h1>
+    <p class="lede">This policy covers the Nightjar CLI, browser demo, and documentation site.</p>
+    <h2>The CLI</h2><p>The CLI uses local files and has no network client or telemetry dependency. It reads your recording and writes inside your output directory.</p><p>Nightjar does not change the source recording. Manifests omit the source name, path, and embedded recording metadata by default.</p><p>The <code>--include-source-path</code> option adds the source name and path only when you request it.</p>
+    <h2>The browser demo</h2><p>The planner reads at most 256 KiB from a selected WAV. It does not upload or retain that file.</p><p>The bundled sample is fetched from this site. Demo actions use no cookies, local storage, session storage, IndexedDB, or OPFS.</p>
+    <h2>The hosted site</h2><p>The product pages contain no third-party scripts, fonts, analytics, advertisements, or tracking pixels. The host may keep short-lived access logs.</p>
+    <h2>Remove offline files</h2><p>Open your browser's site settings for this address. Clear stored data to remove the Nightjar service worker cache.</p>
+    <p class="legal-date">Effective 28 August 2026. Use the project issue tracker for questions.</p>
+  </main>
+  <footer><a class="brand footer-brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span>Nightjar / Slicer</span></a><p>Split long bird recordings into clips locally.</p><nav aria-label="Footer links"><a href="/demo/">Demo</a><a href="/privacy/" aria-current="page">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-bird-audio-slicer" rel="external">Project on GitHub <span class="sr-only">(external)</span></a></nav><p>Built by Param Factory · v0.1.0 · build polish-1</p></footer>
+  <script type="module" src="/src/legal.ts"></script>
+</body></html>

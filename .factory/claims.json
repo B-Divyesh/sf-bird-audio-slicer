@@ -1,0 +1,114 @@
+[
+  {
+    "id": "browser-demo-one-click",
+    "claim": "The demo loads a bundled 20-second recording and shows two planned clips without saving user data.",
+    "where": "landing first screen, /demo banner and result, README",
+    "test": "npm run test:browser -- --grep @claim:browser-demo-one-click",
+    "sandbox": "fresh Chromium context at /demo; assert sample result, banner, reset, and exit action"
+  },
+  {
+    "id": "browser-private",
+    "claim": "The planner reads at most 256 KiB from a selected WAV and does not upload or persist it.",
+    "where": "planner, privacy, README",
+    "test": "npm run test:browser -- --grep @claim:browser-private",
+    "sandbox": "instrument Blob.slice; record requests, cookies, local/session storage, and IndexedDB through plan and download"
+  },
+  {
+    "id": "offline-demo",
+    "claim": "The saved demo and guide remain available offline after the first visit.",
+    "where": "offline banner, README",
+    "test": "npm run test:browser -- --grep @claim:offline-demo",
+    "sandbox": "fresh Chromium context; load /demo once, wait for service worker, set offline, reload, and assert sample result"
+  },
+  {
+    "id": "site-structure",
+    "claim": "Home, demo, privacy, terms, and not-found pages have route metadata, accessible structure, and no third-party page requests.",
+    "where": "all site routes",
+    "test": "npm run test:browser -- --grep @claim:site-structure",
+    "sandbox": "production build in Chromium; inspect titles, metadata, focus, landmarks, heading count, product 404, and axe results"
+  },
+  {
+    "id": "cli-demo",
+    "claim": "nightjar demo slices the bundled recording into two clips in a new temporary directory.",
+    "where": "landing terminal recording, README, .factory/demo.md",
+    "test": "cargo build --quiet && node --test --test-name-pattern='@claim:cli-demo' site/tests/claims.test.mjs",
+    "sandbox": "new process and unique OS temporary directory; assert manifest and two clips"
+  },
+  {
+    "id": "cli-core-outputs",
+    "claim": "Nightjar accepts PCM WAV, float WAV, and FLAC and writes decodable 16-bit WAV clips, JSON, CSV, checkpoints, and SVG spectrograms.",
+    "where": "landing workflow and scope, README",
+    "test": "cargo build --quiet && node --test --test-name-pattern='@claim:cli-core-outputs' site/tests/claims.test.mjs",
+    "sandbox": "bundled PCM WAV/FLAC plus generated float WAV in a fresh temporary directory; inspect every output clip"
+  },
+  {
+    "id": "resume-repair",
+    "claim": "Nightjar reuses complete clips and repairs missing or incomplete clips.",
+    "where": "landing workflow, README",
+    "test": "cargo build --quiet && node --test --test-name-pattern='@claim:resume-repair' site/tests/claims.test.mjs",
+    "sandbox": "slice sample; preserve one clip hash, corrupt another, rerun, and assert one reuse plus repair"
+  },
+  {
+    "id": "silence-boundaries",
+    "claim": "Silence mode moves a boundary to the quietest half-second within the requested search window.",
+    "where": "landing workflow, README",
+    "test": "cargo build --quiet && node --test --test-name-pattern='@claim:silence-boundaries' site/tests/claims.test.mjs",
+    "sandbox": "controlled bundled audio in a fresh directory; assert moved boundary remains within ±2 seconds"
+  },
+  {
+    "id": "fixed-three-minute",
+    "claim": "Fixed mode creates 180-second clips and keeps the final remainder.",
+    "where": "README fixed-slice example",
+    "test": "cargo build --quiet && node --test --test-name-pattern='@claim:fixed-three-minute' site/tests/claims.test.mjs",
+    "sandbox": "fresh sparse 370-second WAV; assert ranges 0–180, 180–360, and 360–370"
+  },
+  {
+    "id": "inspect-details",
+    "claim": "Inspect reports format, duration, channels, sample rate, and size for WAV and FLAC.",
+    "where": "landing workflow, README",
+    "test": "cargo build --quiet && node --test --test-name-pattern='@claim:inspect-details' site/tests/claims.test.mjs",
+    "sandbox": "inspect both bundled formats and compare every field with fixture facts"
+  },
+  {
+    "id": "clip-length-limits",
+    "claim": "Clip length accepts 10 through 3,600 seconds.",
+    "where": "planner help, CLI help, README",
+    "test": "cargo build --quiet && node --test --test-name-pattern='@claim:clip-length-limits' site/tests/claims.test.mjs",
+    "sandbox": "assert acceptance at 10 and 3,600 and exit 2 at 9 and 3,601"
+  },
+  {
+    "id": "manifest-contract",
+    "claim": "Nightjar preserves the source and writes redacted v1 manifests, timestamped clip names, and one CSV row per clip.",
+    "where": "landing facts, privacy, terms, README",
+    "test": "cargo build --quiet && node --test --test-name-pattern='@claim:manifest-contract' site/tests/claims.test.mjs",
+    "sandbox": "location-bearing sample filename; hash source before and after; parse JSON and CSV and assert exact names"
+  },
+  {
+    "id": "cli-options",
+    "claim": "The documented no-thumbnails, force, source-path opt-in, JSON, and exit-code behaviors work.",
+    "where": "README and CLI help",
+    "test": "cargo build --quiet && node --test --test-name-pattern='@claim:cli-options' site/tests/claims.test.mjs",
+    "sandbox": "fresh directories; exercise switches and observable exit codes 2, 3, and 4"
+  },
+  {
+    "id": "birdnet-selection",
+    "claim": "Select copies only chosen WAV clips and their time ranges into a folder for BirdNET Analyzer.",
+    "where": "landing workflow, README",
+    "test": "cargo build --quiet && node --test --test-name-pattern='@claim:birdnet-selection' site/tests/claims.test.mjs",
+    "sandbox": "slice demo, select clip 2, and assert the output folder contains only that WAV and selection.csv"
+  },
+  {
+    "id": "package-scope",
+    "claim": "Nightjar is free under the MIT License, requires Rust 1.85+, bundles no identification model, and has no network, telemetry, or billing dependency.",
+    "where": "landing first screen and install, privacy, README",
+    "test": "cargo build --quiet && node --test --test-name-pattern='@claim:package-scope' site/tests/claims.test.mjs",
+    "sandbox": "inspect tracked package files, Cargo metadata, license text, and dependency declarations"
+  },
+  {
+    "id": "build-artifacts",
+    "claim": "The production build creates dist/site and one nightjar binary in dist/bin.",
+    "where": "README develop and verify",
+    "test": "cargo build --quiet && node --test --test-name-pattern='@claim:build-artifacts' site/tests/claims.test.mjs",
+    "sandbox": "run npm build and assert home, demo, 404, and the single staged CLI binary"
+  }
+]
