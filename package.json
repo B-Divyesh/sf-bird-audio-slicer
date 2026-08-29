@@ -8,6 +8,7 @@
     "test": "cargo test && node --test site/tests/wav.test.mjs && npm run test:claims && npm run test:browser && npm run build:site",
     "test:claims": "cargo build --quiet && node --test site/tests/claims.test.mjs",
     "test:browser": "playwright test",
+    "verify:live": "node scripts/verify-live.mjs",
     "build": "npm run build:site && npm run build:cli",
     "build:site": "vite build --config site/vite.config.mjs",
     "build:cli": "cargo build --release && node scripts/stage-cli.mjs",
