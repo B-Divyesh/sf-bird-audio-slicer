@@ -71,6 +71,9 @@ test('@claim:offline-demo demo reloads offline after one visit', async ({ browse
   await page.reload();
   await expect(page.getByText('2 clips from 00:00:20')).toBeVisible();
   await expect(page.locator('#offline-banner')).toBeVisible();
+  await page.goto('/?demo=1');
+  await expect(page.getByText('2 clips from 00:00:20')).toBeVisible();
+  await expect(page.locator('#offline-banner')).toBeVisible();
   await context.setOffline(false);
   const cleared = await page.evaluate(async () => {
     for (const registration of await navigator.serviceWorker.getRegistrations()) await registration.unregister();

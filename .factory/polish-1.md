@@ -32,7 +32,7 @@ All 16 commands in `.factory/claims.json` passed separately in clean clone
 | F-1-2 | Added `/demo/`, `?demo=1`, banner, reset/exit controls, ephemeral browser state, bundled sample, `nightjar demo`, and `.factory/demo.md`. | B-demo, C-cli-demo, `demo-mobile.png`; Live `/demo/` and `/?demo=1` |
 | F-1-3 | Added the Nightjar 404 and valid Azure `responseOverrides` rewrite. | B-structure, `404-mobile.png`; Live unknown route returns 404 with Nightjar title |
 | F-1-4 | Added `.factory/claims.json` with one tagged observable test per claim. | 16/16 clean-clone claim commands passed |
-| F-1-5 | Cached `/demo/`, its exact assets, and the sample; added offline reload and cache-removal coverage. | B-offline; Live `/demo/` offline reload |
+| F-1-5 | Cached `/demo/`, `/?demo=1`, their exact assets, and the sample; added offline reload and cache-removal coverage. | B-offline; Live both demo URLs offline |
 | F-1-6 | Replaced vague core wording with exact WAV/FLAC outputs and tested each format. | C-cli-core-outputs |
 | F-1-7 | Removed “Streaming memory”; recorded a measured 4 GB ceiling result. | Scale |
 | F-1-8 | Reworded as “Continue an interrupted batch” and tested resume behavior. | C-resume-repair, R-interrupt |

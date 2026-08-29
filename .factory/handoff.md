@@ -61,13 +61,13 @@ Its FCP was 0.9 s, LCP 1.7 s, CLS 0, and TBT 0 ms.
 Deployed `dist/site` through `/opt/fleet/lib/deploy-static.sh`.
 Azure deployment ID: `ca005606-e743-49ab-935d-37fe2f33a575`.
 
-At `2026-08-29T00:08:35Z`, a cold live check confirmed:
+At `2026-08-29T00:12:11Z`, a cold live check confirmed:
 
 - `/`, `/demo/`, `/?demo=1`, `/privacy/`, and `/terms/` return 200 with their exact titles.
 - An unknown path returns 404 with the Nightjar-designed page.
 - Every route has one H1, a main landmark, canonical metadata, zero axe violations, and zero unexpected console errors.
 - Every recorded page request is same-origin.
-- The demo loads two clips, resets, exits, and reloads offline.
+- The demo loads two clips, resets, exits, and reloads offline at `/demo/` and `/?demo=1`.
 - Security headers include CSP, HSTS, no-referrer, nosniff, and disabled camera/microphone/geolocation.
 - Production homepage bytes match `dist/site/index.html` at SHA-256 `ed0c7ebd45f71355e6d6d0e73550ec2378d2c4f28a56b427dffe7c08aa2b5316`.
 - Live Lighthouse scored 100 in all four categories; FCP 0.8 s, LCP 1.4 s, CLS 0, and TBT 0 ms.

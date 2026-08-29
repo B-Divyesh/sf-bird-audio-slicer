@@ -62,7 +62,9 @@ await offline.waitForFunction(() => navigator.serviceWorker?.controller !== null
 await offlineContext.setOffline(true);
 await offline.reload();
 await offline.getByText('2 clips from 00:00:20').waitFor();
-results.push({ route: '/demo/ offline reload', status: 200, sampleClips: 2 });
+await offline.goto(`${base}/?demo=1`);
+await offline.getByText('2 clips from 00:00:20').waitFor();
+results.push({ route: '/demo/ and /?demo=1 offline', status: 200, sampleClips: 2 });
 await offlineContext.close();
 await browser.close();
 
