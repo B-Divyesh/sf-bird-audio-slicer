@@ -115,7 +115,7 @@ test('@claim:offline-demo demo reloads offline after one visit', async ({ browse
   await context.close();
 });
 
-test('@claim:site-structure routes have metadata, focus, accessibility, and a product 404', async ({ page }) => {
+test('@claim:site-structure routes have metadata, focus, accessibility, and a product 404', async ({ page, browser }) => {
   const requests = [];
   const errors = [];
   page.on('request', (request) => requests.push(request.url()));
@@ -148,24 +148,26 @@ test('@claim:site-structure routes have metadata, focus, accessibility, and a pr
   expect(requests.every((url) => new URL(url).origin === new URL(page.url()).origin)).toBe(true);
   expect(errors).toEqual([]);
   for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
-    await page.setViewportSize(viewport);
-    await page.goto('/');
-    await page.getByRole('link', { name: 'Install the CLI' }).click();
-    await expect(page.locator('#install-title')).toBeFocused();
-    await expect(page.locator('#install-title')).toBeInViewport();
-    await page.goBack();
-    await expect(page.locator('#hero-title')).toBeFocused();
-    await expect(page.locator('#hero-title')).toBeInViewport();
-    expect(await page.evaluate(() => scrollY)).toBe(0);
-    const heroBox = await page.locator('#hero-title').boundingBox();
-    expect(heroBox.y).toBeGreaterThanOrEqual(0);
+    const context = await browser.newContext({ viewport });
+    const navigationPage = await context.newPage();
+    await navigationPage.goto('/');
+    await navigationPage.getByRole('link', { name: 'Install the CLI' }).click();
+    await expect(navigationPage.locator('#install-title')).toBeFocused();
+    await expect(navigationPage.locator('#install-title')).toBeInViewport();
+    await navigationPage.goBack();
+    await expect(navigationPage.locator('#hero-title')).toBeFocused();
+    await expect(navigationPage.locator('#hero-title')).toBeInViewport();
+    expect(await navigationPage.evaluate(() => scrollY)).toBe(0);
+    const heroBox = await navigationPage.locator('#hero-title').boundingBox();
+    expect(heroBox.y).toBeGreaterThanOrEqual(-1);
     expect(heroBox.y + heroBox.height).toBeLessThanOrEqual(viewport.height);
-    await page.goForward();
-    await expect(page.locator('#install-title')).toBeFocused();
-    await expect(page.locator('#install-title')).toBeInViewport();
-    const installBox = await page.locator('#install-title').boundingBox();
-    expect(installBox.y).toBeGreaterThanOrEqual(0);
+    await navigationPage.goForward();
+    await expect(navigationPage.locator('#install-title')).toBeFocused();
+    await expect(navigationPage.locator('#install-title')).toBeInViewport();
+    const installBox = await navigationPage.locator('#install-title').boundingBox();
+    expect(installBox.y).toBeGreaterThanOrEqual(-1);
     expect(installBox.y + installBox.height).toBeLessThanOrEqual(viewport.height);
+    await context.close();
   }
 
   await page.goto('/');

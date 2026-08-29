@@ -131,14 +131,16 @@ function routeHeading() {
 function restoreRoutePosition() {
   const heading = routeHeading();
   if (!heading) return;
+  document.documentElement.classList.add('route-restoring');
   heading.focus({ preventScroll: true });
   if (location.hash) heading.scrollIntoView({ block: 'start', behavior: 'auto' });
   else window.scrollTo({ top: 0, behavior: 'auto' });
   routeStatus.textContent = heading.textContent ?? document.title;
+  requestAnimationFrame(() => document.documentElement.classList.remove('route-restoring'));
 }
 
 function scheduleRouteRestore() {
-  setTimeout(restoreRoutePosition, 100);
+  requestAnimationFrame(() => setTimeout(restoreRoutePosition, 0));
 }
 document.addEventListener('click', (event) => {
   const link = (event.target as Element).closest<HTMLAnchorElement>('a[href^="#"],a[href^="/#"]');
